@@ -13,7 +13,7 @@ class PrivateEye:
         # Owner Username
         self.owner_username = ""
 
-    def format_reply(self, message, collected_comments):
+    def format_reply(self, collected_comments):
         """ Format response from collected comments"""
         
         list_to_string = ""
@@ -25,9 +25,9 @@ class PrivateEye:
 
             # Check for errors
             if comment == "no comments matching keyword was found.":
-                message.reply("no comments matching keyword was found.")
-            elif comment == "something went wrong":
-                message.reply("something went wrong")
+                list_to_string = " no comments matching keyword was found."
+                break
+
             else:
 
                 # Seperate comments into their own list
@@ -36,7 +36,7 @@ class PrivateEye:
                     num_of_comments += 1
                     list_to_string += element + "\n\n"
         
-        text = f"#Found {num_of_comments}Comment(s):\n\n {list_to_string}"
+        text = f"Found {num_of_comments} Comment(s):\n\n{list_to_string}"
         return self.convert_to_markdown(text)
 
     def convert_to_markdown(self, text):
@@ -185,11 +185,11 @@ class PrivateEye:
                             keyword.strip(" ").lower()
 
                     collected_comments = self.check_user_comments(username, keywords)
-                    formatted_reply = self.format_reply(message, collected_comments)
+                    formatted_reply = self.format_reply(collected_comments)
             else:
                     username = body.strip(" ").lower()
                     collected_comments = self.check_user_comments(username)
-                    formatted_reply = self.format_reply(message, collected_comments)    
+                    formatted_reply = self.format_reply(collected_comments)    
                 
             message.reply(f"{self.get_user_info(username)} \n {formatted_reply}")
             message.mark_read()
