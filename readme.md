@@ -1,9 +1,11 @@
 
-# Private Eye Reddit bot
+## Private Eye Reddit bot
 
 Private eye bot takes commands from a private message and replies to the user with the results.
 
 It utilizes Reddit's API with the praw module and is able to find users by name and can output basic info and search through every comment made by the specified user.
+
+# Example Usage
 
 Currently, the bot only supports the "!search" command. You can use this command by sending a private message to your bot. The command is in the subject line, and the body of the message should contain the target's username separated by a "|" character and the keywords separated by an "," :
 
@@ -19,7 +21,7 @@ Another acceptable form of input is a username without any delimiters, although 
 
 
 
-## Deployment
+# Deployment
 
 To deploy this bot clone the repository
 
