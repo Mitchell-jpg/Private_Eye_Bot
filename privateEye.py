@@ -1,4 +1,5 @@
 import praw
+from prawcore.exceptions import NotFound, TooManyRequests, InvalidToken
 import time
 
 class PrivateEye:
@@ -8,34 +9,34 @@ class PrivateEye:
         """Initialize bot"""
 
         # Create reddit instance
-        self.reddit = praw.Reddit("PrivateEye", user_agent="Private_Eye_Bot 0.1")
+        try:
+            self.reddit = praw.Reddit("PrivateEye", user_agent="Private_Eye_Bot 0.1")
+        except InvalidToken as e:
+            print(f"{e}: Check tokens in praw.ini file.")
 
         # Owner Username
         self.owner_username = ""
 
-    def format_reply(self, collected_comments):
+    def format_reply(self, collected_comments):            # <-- clarify function is for comments
         """ Format response from collected comments"""
         
         list_to_string = ""
         num_of_comments = 0
 
         #Process comments found
-        
         for comment in collected_comments:
-
             # Check for errors
             if comment == "no comments matching keyword was found.":
-                list_to_string = " no comments matching keyword was found."
+                list_to_string = " no comments matching keyword(s) was found."
                 break
 
             else:
-
                 # Seperate comments into their own list
                 for element in comment :
                     print(comment)
                     num_of_comments += 1
                     list_to_string += element + "\n\n"
-        
+            
         text = f"Found {num_of_comments} Comment(s):\n\n{list_to_string}"
         return self.convert_to_markdown(text)
 
@@ -58,69 +59,85 @@ class PrivateEye:
                 markdown += line + '\n'   
         return markdown
     
-    def check_user_comments(self, username, keywords=""):
+    def check_user_comments(self, username, keywords=None):
         """Check user comments for keywords.  If no keywords, return last 5 comments"""
 
         collected_comments = []
 
-        # Create instance of comments
-        comments = self.reddit.redditor(username).comments.new
+        max_retries = 3
+        attempts = 0
+        success = False
+        
+        while not success and attempts < max_retries:
+            try:
+                print("Searching for recent comments...\n")
 
-        # Search for most recent comments; display last 5 if found.
-        print("Searching for recent comments...\n")
+                # Create instance of comments
+                comments = self.reddit.redditor(username).comments.new
+                success = True
+            
+            except NotFound as e:
+                print(f"{e} No comment's found for {username}")
+                success = True
+                return collected_comments
+                
+            except TooManyRequests as e:
+                attempts +=1
+                print(f"Too many reqests.. waiting 20 seconds and trying again.. attempt {attempts} of {max_retries}\n")
+                time.sleep(20)
+            
 
         # If no searchable keywords, return last 5 comments.
-        if keywords == "":
-            try:
-                for comment in comments(limit=5):
+        if keywords is None:
+            for comment in comments(limit=5):
                     
-                    extracted_comment = []
+                extracted_comment = []
 
-                    # Convert UTC to Local
-                    time_obj = time.localtime(comment.created_utc)
-                    local_time = time.strftime('%Y-%m-%d %H:%M:%S', time_obj)
+                # Convert UTC to Local
+                time_obj = time.localtime(comment.created_utc)
+                local_time = time.strftime('%Y-%m-%d %H:%M:%S', time_obj)
+
+                # Highlight found keywords
+                highlighted_comment = comment.body.replace(keyword, f"**{keyword}**")
                         
-                    # return comments.
-                    # return comments, ready for markdown.
-                    extracted_comment.append ( 
-                        f"**Subreddit name:** r/{comment.subreddit.display_name} \n\n"        +
-                        "---\n\n"                                                                 +
-                        comment.body + "\n\n"                                                 +
-                        "---\n\n"                                                                 +
-                        f"Karma: {comment.score}  |  Posted at: {local_time}\n\n"             +                                        
-                        f"[Link_to_comment](https://reddit.com{comment.permalink})\n\n"  
-                    )
-                    collected_comments.append(extracted_comment)
-            except:
-                return ""
-                
+                # return comments, ready for markdown.
+                extracted_comment.append ( 
+                    f"**Subreddit name:** r/{comment.subreddit.display_name} \n\n"        +
+                    "---\n\n"                                                                 +
+                    highlighted_comment.body + "\n\n"                                                 +
+                    "---\n\n"                                                                 +
+                    f"Karma: {comment.score}  |  Posted at: {local_time}\n\n"             +                                        
+                    f"[Link_to_comment](https://reddit.com{comment.permalink})\n\n"  
+                )
+                collected_comments.append(extracted_comment)
+            
             return collected_comments
                 
         # Search for keywords, return matching comments (maximum 30)
         else:
-            try:
-                for comment in comments(limit=30):
-                    for keyword in keywords:
-                        if keyword in comment.body:
-                            extracted_comment = []
+            for comment in comments(limit=30):
+                for keyword in keywords:
+                    if keyword in comment.body:
+                        extracted_comment = []
 
-                            # Convert UTC to Local
-                            time_obj = time.localtime(comment.created_utc)
-                            local_time = time.strftime('%Y-%m-%d %H:%M:%S', time_obj)
+                        # Convert UTC to Local
+                        time_obj = time.localtime(comment.created_utc)
+                        local_time = time.strftime('%Y-%m-%d %H:%M:%S', time_obj)
+
+                        # Highlight found keyword
+                        highlighted_comment = comment.body.replace(keyword, f"**{keyword}**")
                             
-                            # Store in temporary list.
-                            extracted_comment.append ( 
-                                f"**Subreddit name:** r/{comment.subreddit.display_name} \n\n"        +
-                                "---\n\n"                                                                 +
-                                comment.body + "\n\n"                                                 +
-                                "---\n\n"                                                                 +
-                                f"Karma: {comment.score}  |  Posted at: {local_time}\n\n"             +                                        
-                                f"[Link_to_comment](https://reddit.com{comment.permalink})\n\n"
-                            )  
-                            collected_comments.append(extracted_comment)
-            except:
-                return ""
-            
+                        # Store in temporary list.
+                        extracted_comment.append ( 
+                            f"**Subreddit name:** r/{comment.subreddit.display_name} \n\n"        +
+                            "---\n\n"                                                                 +
+                            highlighted_comment.body + "\n\n"                                             +
+                            "---\n\n"                                                                 +
+                            f"Karma: {comment.score}  |  Posted at: {local_time}\n\n"             +                                        
+                            f"[Link_to_comment](https://reddit.com{comment.permalink})\n\n"
+                        )  
+                        collected_comments.append(extracted_comment)
+
             if collected_comments == []:
                 return "no comments matching keyword was found."
             else:
@@ -128,21 +145,40 @@ class PrivateEye:
  
     def get_user_info(self, username):
 
-        # Create instance of user
-        self.user = self.reddit.redditor(username)
+        max_retries = 3
+        attempts = 0
+        success = False
+        
+        while not success and attempts < max_retries:
+
+            try:
+                print(f"searching for {username}..\n")
+
+                # Create instance of user
+                self.user = self.reddit.redditor(username)
+                success = True
+
+            except NotFound as e:
+
+                print(f"{e}: Username {username} not found\n\n")
+                return f"{username} not found."
+                
+            except TooManyRequests as e:
+
+                time.sleep(20)
+                print(f"Too many reqests.. waiting 20 seconds and trying again.. attempt {attempts} of {max_retries}\n")
 
         # Convert UTC to Local
-        try:
-            time_obj = time.localtime(self.user.created_utc)
-            local_time = time.strftime('%Y-%m-%d %H:%M:%S', time_obj)
+        time_obj = time.localtime(self.user.created_utc)
+        local_time = time.strftime('%Y-%m-%d %H:%M:%S', time_obj)
               
-            # Information on user
-            text = (f"##{self.user}\n\n> Karma: {self.user.comment_karma}\n\n> [Profile_pic]({self.user.icon_img})\n\n>" +                               
-            f" Reddit ID: {self.user.id}\n\n> Account made @ {local_time}\n\n> Verifed Email?: {self.user.has_verified_email}\n\n" +             
-            f"> Reddit employee? {str(self.user.is_employee)}\n\n> Moderator?: {str(self.user.is_mod)}\n\n> Reddit Premium?: {str(self.user.is_gold)}\n\n")
-        except:
-            return f"{username} not found."
-        
+        # Information on user
+        text = (f"##{self.user}\n\n> Karma: {self.user.comment_karma}\n\n> [Profile_pic]({self.user.icon_img})\n\n>" +                               
+        f" Reddit ID: {self.user.id}\n\n> Account made @ {local_time}\n\n> Verifed Email?: {self.user.has_verified_email}\n\n" +             
+        f"> Reddit employee? {str(self.user.is_employee)}\n\n> Moderator?: {str(self.user.is_mod)}\n\n> Reddit Premium?: {str(self.user.is_gold)}\n\n")
+
+        # output   
+        print(f"info on user {username} found.. ")
         return self.convert_to_markdown(text)
 
     def search_for_commands(self, message):
@@ -150,12 +186,13 @@ class PrivateEye:
            
         # Allow bot owner to shutdown remotley; Block others who try.
         if message.subject == "!shutdown": 
-            if message.author == self.settings.owner:
-                bot_active = False
+            if message.author == self.owner_username:
+                print("shutting down bot")
+                self.bot_active = False
             else:
                 print(f"Blocked user {message.author} for trying to shutdown bot.")
-                self.message.mark_read()
-                self.message.block()
+                message.mark_read()
+                message.block()
             
         elif message.subject == "!search" or "Re: !search":
 
@@ -170,7 +207,6 @@ class PrivateEye:
                 if len(sepmsg) != 2:
                     message.reply("Wrong format used.  Seperate username and keywords using '|' and seperate keywords by ','")
                 else:
-
                     username = sepmsg[0].strip(" ").lower()
                         
                     # Check if there are multiple keywords; format and check for comments.
@@ -193,27 +229,38 @@ class PrivateEye:
                 
             message.reply(f"{self.get_user_info(username)} \n {formatted_reply}")
             message.mark_read()
-            print(f"Infromation on {username} provided to {message.author}.\nResuming inbox monitoring\n")
+            print(f"Infromation on {username} provided to {message.author}.\nResuming inbox monitoring\n\n")
                 
         else:
-            message.reply("Try again.")
-            print(f"sent try again message to {message.author}")
+            message.reply(self.convert_to_markdown(f"Invalid format or unsupported command.\n\nI currently only support the *'!search'*"))
             message.mark_read()
+            print(f"sent try again message to {message.author}")
+            
 
         
     def check_messages(self):
         """Monitor bot's inbox for keywords"""
         
-        inbox = self.reddit.inbox.unread()
-        # Begin monitoring inbox for keywords.
+        max_retries = 3
+        attempts = 0
+        success = False
         
+        while not success and attempts < max_retries:
+            try:
+                inbox = self.reddit.inbox.unread()
+                success = True
+            except TooManyRequests as e:
+                attempts += 1
+                print(f"Too many reqests.. waiting 20 seconds and trying again.. attempt {attempts} of {max_retries}\n")
+        
+        # Begin monitoring inbox for keywords.
         for message in inbox:
                 
             # Print recieved message into console.
             print(
                   f"From: {message.author}\n"      +
                   f"Subject: {message.subject}\n"  +
-                  message.body
+                  message.body + "\n\n"
                   )
             
             self.search_for_commands(message)
@@ -231,7 +278,7 @@ class PrivateEye:
         while bot_active:
            
             self.check_messages()
-            time.sleep(5)
+            time.sleep(10)
 
 
 if __name__ == "__main__":
