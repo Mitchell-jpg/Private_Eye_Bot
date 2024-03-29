@@ -1,5 +1,5 @@
+![image](https://github.com/Mitchell-jpg/Private_Eye_Bot/assets/91237766/efb5f80b-eacc-4562-a8d5-e60ed18eadf6)
 
-# Private Eye Reddit bot
 
 Private eye bot takes commands from a private message and replies to the user with the results.
 
