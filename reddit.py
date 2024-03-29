@@ -16,8 +16,6 @@ class RedditUserData:
         while not success and attempts < max_retries:
 
             try:
-                print(f"searching for {username}..\n")
-
                 # Create instance of user
                 self.user = self.reddit.redditor(username)
                 success = True
@@ -32,13 +30,12 @@ class RedditUserData:
                 f"> Reddit employee? {str(self.user.is_employee)}\n\n> Moderator?: {str(self.user.is_mod)}\n\n> Reddit Premium?: {str(self.user.is_gold)}\n\n")
 
                 # output   
-                print(f"info on user {username} found.. ")
                 return text
         
             except NotFound as e:
 
                 print(f"{e}: Username {username} does not exist.  Check for spelling mistakes.\n\n")
-                break
+                return False
                     
             except TooManyRequests as e:
 
@@ -51,7 +48,7 @@ class RedditUserData:
         collected_comments = []
 
         
-        print("Searching for recent comments...\n")
+        print("\nSearching for recent comments...\n")
 
         # Create instance of comments
         comments = self.reddit.redditor(username).comments.new
@@ -143,7 +140,6 @@ class RedditUserData:
             else:
                 # concat comment's
                 for element in comment :
-                    print(comment)
                     num_of_comments += 1
                     list_to_string += element + "\n\n"    
             
