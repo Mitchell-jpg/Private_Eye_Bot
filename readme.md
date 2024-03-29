@@ -49,10 +49,10 @@ password=*your_bots_reddit_password
 username=*your_bots_name
 ```
 
-Ensure that praw is downloaded:
+Ensure that required dependencies are downloaded:
 
 ```
-pip install praw
+python3 -m pip install -r requirements.txt
 ```
 
 run the bot!
