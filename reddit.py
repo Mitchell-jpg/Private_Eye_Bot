@@ -2,16 +2,29 @@ import time
 from prawcore.exceptions import NotFound, TooManyRequests
 
 class RedditUserData:
+    """ A class to manage request made to reddits database"""
 
     def __init__(self, reddit):
+        """
+        Initialize reddit instance
+        """
         
         self.reddit = reddit
 
     def get_user_info(self, username):
+        """
+        Take username and outputs Karma, redditID, Acount creation time, etc.
 
+        returns string value formatted in markdown if user exists.
+
+        returns False is no user exists.
+
+        kwags:
+
+            username --> str
+        """
         max_retries = 3
         attempts = 0
-        success = False
         
         while not success and attempts < max_retries:
 
@@ -33,17 +46,27 @@ class RedditUserData:
                 return text
         
             except NotFound as e:
-
+                # User not found; Return False
                 print(f"{e}: Username {username} does not exist.  Check for spelling mistakes.\n\n")
                 return False
                     
             except TooManyRequests as e:
-
-                time.sleep(20)
+                attempts += 1
                 print(f"{e}: waiting 20 seconds and trying again.. attempt {attempts} of {max_retries}\n")
+                time.sleep(20)
 
     def _check_user_comments(self, username, keywords=None):
-        """Check user comments for keywords.  If no keywords, return last 5 comments"""
+        """
+        Check user comments for keywords.  
+        
+        Returns up to 30 comments with keywords.
+        Return last 5 comments with no keywords.
+        
+        kwags:
+            username --> str
+
+            keywords --> list
+        """
 
         collected_comments = []
 
@@ -79,7 +102,8 @@ class RedditUserData:
                             f"[Link_to_comment](https://reddit.com{comment.permalink})\n\n"  
                         )
                         collected_comments.append(extracted_comment)
-                    
+
+                    # break loop if all comments collected sucessfully.
                     success = True
                     
                         
@@ -107,26 +131,38 @@ class RedditUserData:
                                     f"[Link_to_comment](https://reddit.com{comment.permalink})\n\n"
                                 )  
                                 collected_comments.append(extracted_comment)
-                        
+                        # break loop if all comments collected sucessfully
                         success = True
             
+            # If user has made no comments, break loop.
             except NotFound as e:
                 print(f"{e} No comment's found for {username}")
                 success = True
                 break
                 
+            # If rate-limited wait 20 seconds and try again a maximum of three times.
             except TooManyRequests as e:
                 attempts +=1
                 print(f"Too many reqests.. waiting 20 seconds and trying again.. attempt {attempts} of {max_retries}\n")
                 time.sleep(20)
 
+        # if nothing was found append list.  This will be processed by format_comments() function to notify via PM.
         if collected_comments == []:
             return ["no comments matching keyword was found"]
-            
-        else: return collected_comments
+        
+        else:
+            return collected_comments
 
     def format_comments(self, collected_comments):
-        """ Format response from collected comments"""
+        """
+         Format response from collected comments
+
+         returns string formatted in markdown.
+
+         kwags:
+            collected_comments --> list
+
+        """
         
         list_to_string = ""
         num_of_comments = 0
