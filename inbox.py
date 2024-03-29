@@ -1,29 +1,22 @@
 from prawcore.exceptions import TooManyRequests, NotFound
+from reddit import RedditUserData
+
 
 
 class Inbox:
+    """ A class to manage the bot's inbox """
 
     def __init__(self, reddit):
         self.reddit = reddit
-
+        self.inbox = self.reddit.inbox.unread()
+        self.reddit_user_data = RedditUserData(self.reddit)
+        self.owner_username = ""
 
     def check_messages(self):
         """Monitor bot's inbox for keywords"""
 
-        max_retries = 3
-        attempts = 0
-        success = False
-        
-        while not success and attempts < max_retries:
-            try:
-                inbox = self.reddit.inbox.unread()
-                success = True
-            except TooManyRequests as e:
-                attempts += 1
-                print(f"Too many reqests.. waiting 20 seconds and trying again.. attempt {attempts} of {max_retries}\n")
-        
         # Begin monitoring inbox for keywords.
-        for message in inbox:
+        for message in self.inbox:
                 
             # Print recieved message into console.
             print("message recieved\n"             +
@@ -73,18 +66,18 @@ class Inbox:
                         for keyword in keywords:
                             keyword.strip(" ").lower()
 
-                    collected_comments = self.check_user_comments(username, keywords)
-                    formatted_reply = self.format_reply(collected_comments)
+                    collected_comments = self.reddit_user_data._check_user_comments(username, keywords)
+                    formatted_reply = self.reddit_user_data.format_comments(collected_comments)
             else:
                     username = body.strip(" ").lower()
-                    collected_comments = self.check_user_comments(username)
-                    formatted_reply = self.format_reply(collected_comments)    
+                    collected_comments = self.reddit_user_data._check_user_comments(username)
+                    formatted_reply = self.reddit_user_data.format_comments(collected_comments)    
                 
-            message.reply(f"{self.get_user_info(username)} \n {formatted_reply}")
+            message.reply(f"{self.reddit_user_data.get_user_info(username)} \n {formatted_reply}")
             message.mark_read()
             print(f"Infromation on {username} provided to {message.author}.\nResuming inbox monitoring\n\n")
                 
         else:
-            message.reply(self.convert_to_markdown(f"Invalid format or unsupported command.\n\nI currently only support the *'!search'*"))
+            message.reply(f"Invalid format or unsupported command.\n\nI currently only support the *'!search'*")
             message.mark_read()
             print(f"sent try again message to {message.author}")
