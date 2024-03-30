@@ -74,9 +74,16 @@ class PrivateEye:
             
             # if user inputs, 'Start bot': Initialize ability to recieve commands via reddit PM  
             bot_active = self.bot_active
+           
             while bot_active == True:
-                self.reddit_inbox.check_messages()
-                time.sleep(10)
+                try:
+                    self.reddit_inbox.check_messages()    
+                    time.sleep(10)
+                # Exception is used to break free from loop when !shutdown command is issued via PM
+                except Exception:
+                    self.bot_active = False
+                    break
+    
                 
         
     def _connectivity_check(self):
@@ -143,7 +150,7 @@ class PrivateEye:
                 # Prompts user to setup username that is allowed to send !shutdown message.  Begins while loop in run_bot()
                 self.reddit_inbox.setup_bot_owner()
                 self.bot_active = True
-                print("\nBot activated sucessfully, monitoring for messages.  Press CTRL + C to stop bot.")
+                print("\nBot activated sucessfully, monitoring for messages.  Press CTRL + C to stop bot locally.")
 
         # Search for user, optionally search user comments.
         elif user_input == "search" or user_input == "s":
