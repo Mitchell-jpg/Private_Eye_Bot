@@ -50,9 +50,9 @@ class Inbox:
 
                 success = True
             
-            #This exception is used to break free from the look in private_eye.py
-            except Exception as e:
-                raise Exception
+                #This exception is used to break free from the look in private_eye.py
+                #except Exception as e:
+                #raise Exception
 
             except TooManyRequests as e:
                     attempts += 1
@@ -99,6 +99,7 @@ class Inbox:
             else:
                 # process keywords from the body of the message
                 keywords = self.parse_keywords_from_body(body)
+                #print(keywords)
                 # Collect comments, filtered by keywords if supplied
                 collected_comments = self.reddit_user_data._check_user_comments(username, keywords)
                 # Format into markdown, with comment body + metadata. 
@@ -167,23 +168,24 @@ class Inbox:
 
         body instance
         """
-        if "|" in body:
-            sepmsg = body.split("|")
-
-            if "," in sepmsg[1]:
-                keywords = sepmsg[1].split(",")
-                for i in range(len(keywords)):
-                    keywords[i] = keywords[i].strip().lower()
-                return keywords
-                                    
-            else:
-                keywords = sepmsg[1]
-                for keyword in keywords:
-                    keyword.strip(" ").lower()
-                return keywords
-        else:
+        if "|" not in body:
             keywords = None
             return keywords
+        
+        sepmsg = body.split("|")
+        keywords = sepmsg[1].split(".")
+
+        if len(keywords) > 1:
+            for i in range(len(keywords)):
+                keywords[i] = keywords[i].strip(" ").lower()
+            return keywords
+                            
+        else:
+            # format singular keyword and place it in list.
+            for keyword in keywords:
+                keyword.strip(" ").lower()
+            return keywords
+        
 
 
     
