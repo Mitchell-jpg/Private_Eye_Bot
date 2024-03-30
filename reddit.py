@@ -26,7 +26,7 @@ class RedditUserData:
         max_retries = 3
         attempts = 0
         
-        while not success and attempts < max_retries:
+        while attempts < max_retries:
 
             try:
                 # Create instance of user
