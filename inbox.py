@@ -16,7 +16,7 @@ class Inbox:
         """ Initializes reddit instance and userdata acess"""
         self.reddit = reddit
         self.reddit_user_data = RedditUserData(self.reddit)
-    
+
     def setup_bot_owner(self):
         """ 
         prompts user to setup bot owner
@@ -47,7 +47,12 @@ class Inbox:
                         )
                     
                     self.search_for_commands(message)
+
                 success = True
+            
+            #This exception is used to break free from the look in private_eye.py
+            except Exception as e:
+                raise Exception
 
             except TooManyRequests as e:
                     attempts += 1
@@ -72,8 +77,9 @@ class Inbox:
                 message.block()
                 
             print("shutting down bot")
-            self.bot_active = False
             message.mark_read()
+            raise Exception
+            
         
         elif message.subject.lower() == "!search" or "re: !search":
 
