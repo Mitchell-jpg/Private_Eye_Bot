@@ -5,6 +5,11 @@ Private eye bot takes commands from a private message and replies to the user wi
 
 It utilizes Reddit's API with the praw module and is able to find users by username and can output basic info and search through every comment made by the specified user and can even filter by keyword!
 
+## Example output
+
+![image](https://github.com/Mitchell-jpg/Private_Eye_Bot/assets/91237766/638f697c-329c-4e2f-a2c6-378a72e23ee5)
+
+
 ## CLI mode usage
 
 When starting the program, you will begin in CLI mode. Here you have the commands: 'search', 'help', 'quit', and 'start bot'.
