@@ -1,17 +1,17 @@
 import time
-from prawcore.exceptions import NotFound, TooManyRequests
+from prawcore.exceptions import NotFound, TooManyRequests, ResponseException
 
 class RedditUserData:
     """ A class to manage request made to reddits database"""
 
-    def __init__(self, reddit):
+    def __init__(self, reddit) -> None:
         """
         Initialize reddit instance
         """
         
         self.reddit = reddit
 
-    def get_user_info(self, username):
+    def get_user_info(self, username: str) -> str:
         """
         Take username and outputs Karma, redditID, Acount creation time, etc.
 

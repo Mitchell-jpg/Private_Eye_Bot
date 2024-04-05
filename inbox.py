@@ -12,12 +12,12 @@ class Inbox:
      
      """
 
-    def __init__(self, reddit):
+    def __init__(self, reddit) -> None:
         """ Initializes reddit instance and userdata acess"""
         self.reddit = reddit
         self.reddit_user_data = RedditUserData(self.reddit)
 
-    def setup_bot_owner(self):
+    def setup_bot_owner(self) -> None:
         """ 
         prompts user to setup bot owner
 
@@ -27,6 +27,7 @@ class Inbox:
 
     def check_messages(self):
         """Monitor bot's inbox for keywords"""
+        
         # Initialize unread messages
         self.inbox = self.reddit.inbox.unread()
 
