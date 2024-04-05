@@ -1,27 +1,39 @@
 import time
-from prawcore.exceptions import NotFound, TooManyRequests
+from prawcore.exceptions import NotFound, TooManyRequests, ResponseException
 
 class RedditUserData:
     """ A class to manage request made to reddits database"""
 
-    def __init__(self, reddit):
+    def __init__(self, reddit) -> None:
         """
         Initialize reddit instance
         """
         
         self.reddit = reddit
 
-    def get_user_info(self, username):
+    def check_user_exists(self, username: str) -> bool:
+        """
+        Checks is user exists. returns T or F
+        
+        """
+        #Check if user exists.
+        print(f"\nsearching for {username}..")
+        username_check = self.get_user_info(username)
+        
+
+        if not username_check:
+            return False
+        return True
+                
+                    
+
+    def get_user_info(self, username: str) -> str:
         """
         Take username and outputs Karma, redditID, Acount creation time, etc.
 
         returns string value formatted in markdown if user exists.
 
-        returns False is no user exists.
-
-        kwags:
-
-            username --> str
+        raises False is no user if found.
         """
         max_retries = 3
         attempts = 0
@@ -31,7 +43,6 @@ class RedditUserData:
             try:
                 # Create instance of user
                 self.user = self.reddit.redditor(username)
-                success = True
 
                 # Convert UTC to Local
                 time_obj = time.localtime(self.user.created_utc)
@@ -47,25 +58,21 @@ class RedditUserData:
         
             except NotFound as e:
                 # User not found; Return False
-                print(f"{e}: Username {username} does not exist.  Check for spelling mistakes.\n\n")
+                print(f"\n{e}: Username {username} could not be found.  Check for spelling mistakes.\n")
                 return False
+                
                     
             except TooManyRequests as e:
                 attempts += 1
                 print(f"{e}: waiting 20 seconds and trying again.. attempt {attempts} of {max_retries}\n")
                 time.sleep(20)
 
-    def _check_user_comments(self, username, keywords=None):
+    def check_user_comments(self, username:str , keywords: list =None) -> list:
         """
         Check user comments for keywords.  
         
         Returns up to 30 comments with keywords.
         Return last 5 comments with no keywords.
-        
-        kwags:
-            username --> str
-
-            keywords --> list
         """
 
         collected_comments = []
@@ -151,17 +158,13 @@ class RedditUserData:
             return ["no comments matching keyword was found"]
         
         else:
-            return collected_comments
+            return self._format_comments(collected_comments)
 
-    def format_comments(self, collected_comments):
+    def _format_comments(self, collected_comments: list) -> str:
         """
          Format response from collected comments
 
          returns string formatted in markdown.
-
-         kwags:
-            collected_comments --> list
-
         """
         
         list_to_string = ""

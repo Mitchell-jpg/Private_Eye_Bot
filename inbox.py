@@ -12,12 +12,12 @@ class Inbox:
      
      """
 
-    def __init__(self, reddit):
+    def __init__(self, reddit) -> None:
         """ Initializes reddit instance and userdata acess"""
         self.reddit = reddit
         self.reddit_user_data = RedditUserData(self.reddit)
 
-    def setup_bot_owner(self):
+    def setup_bot_owner(self) -> None:
         """ 
         prompts user to setup bot owner
 
@@ -25,8 +25,9 @@ class Inbox:
         """
         self.bot_owner = input("Enter the bot owner's username (allows !shutdown message from entered username):")
 
-    def check_messages(self):
+    def check_messages(self) -> None:
         """Monitor bot's inbox for keywords"""
+
         # Initialize unread messages
         self.inbox = self.reddit.inbox.unread()
 
@@ -46,13 +47,11 @@ class Inbox:
                         message.body + "\n\n"
                         )
                     
-                    self.search_for_commands(message)
+                    self._search_for_commands(message)
 
                 success = True
             
-                #This exception is used to break free from the look in private_eye.py
-                #except Exception as e:
-                #raise Exception
+                
 
             except TooManyRequests as e:
                     attempts += 1
@@ -61,12 +60,15 @@ class Inbox:
                     
             
         
-    def search_for_commands(self, message):
+    def _search_for_commands(self, message) -> None:
         """
-        Search for keywords in messages provided by check_messages()
+        Search for keywords in messages.
+
+        Requires an instance of the message.
+
+        This function will reply to users and mark messages as read.
 
         messages doc: https://praw.readthedocs.io/en/stable/code_overview/models/message.html
-        
         """
            
         # Allow bot owner to shutdown remotley; Block others who try.
@@ -78,6 +80,8 @@ class Inbox:
                 
             print("shutting down bot")
             message.mark_read()
+
+            #This exception is used to break free from the loop in private_eye.py
             raise Exception
             
         
@@ -86,10 +90,10 @@ class Inbox:
             body = message.body
       
             # Check if there are multiple keywords; format and check for comments.
-            username = self.parse_username_from_body(message, body)
+            username = self._parse_username_from_body(message, body)
 
             # Check if username exists.
-            if self.check_user_exists(username) == False:
+            if self.reddit_user_data.check_user_exists(username) == False:
 
                 # Notify message author if the user does not exist
                 print(f" user:{username} doesn't exist.  notifying {message.author}")
@@ -98,51 +102,25 @@ class Inbox:
                 
             else:
                 # process keywords from the body of the message
-                keywords = self.parse_keywords_from_body(body)
-                #print(keywords)
+                keywords = self._parse_keywords_from_body(body)
                 # Collect comments, filtered by keywords if supplied
-                collected_comments = self.reddit_user_data._check_user_comments(username, keywords)
-                # Format into markdown, with comment body + metadata. 
-                formatted_comments = self.reddit_user_data.format_comments(collected_comments)
-   
+                formatted_comments = self.reddit_user_data.check_user_comments(username, keywords)
                 # Reply to sender
                 message.reply(f"{self.reddit_user_data.get_user_info(username)} \n {formatted_comments}")
                 message.mark_read()
                 print(f"Infromation on {username} provided to {message.author}.\nResuming inbox monitoring\n\n")
                 
         else:
-            # If user types something swrong in the subject line, send user instructions.
+            # If user types something wrong in the subject line, send user instructions.
             message.reply(f"Invalid format or unsupported command.\n\nI currently only support the *'!search'*")
             message.mark_read()
             print(f"sent try again message to {message.author}")
 
-    def check_user_exists(self, username):
-        """
-        Checks is user exists. returns T or F
-
-        kwags:
-
-        username --> str 
+   
         
-        """
-        #Check if user exists.
-        print(f"\nsearching for {username}..")
-        username_check = self.reddit_user_data.get_user_info(username)
-                    
-        if not username_check:
-            return False
-        else: 
-            return True
-        
-    def parse_username_from_body(self, message, body):
+    def _parse_username_from_body(self, message: str, body: str) -> str:
         """ 
-        Parses a message body for a username, returns str.
-        
-        kwags:
-
-        message instance
-
-        body instance
+        Parses a message body for a username.
         """
 
         if "|" in body:
@@ -158,15 +136,9 @@ class Inbox:
             username = body.strip(" ").lower()
             return username
 
-    def parse_keywords_from_body(self, body):
+    def _parse_keywords_from_body(self, body: str) -> str:
         """ 
         Parses a message body for a keywords, returns list.
-        
-        kwags:
-
-        message instance
-
-        body instance
         """
         if "|" not in body:
             keywords = None
