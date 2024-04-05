@@ -118,9 +118,11 @@ class Inbox:
 
    
         
-    def _parse_username_from_body(self, message: str, body: str) -> str:
+    def _parse_username_from_body(self, message, body: str) -> str:
         """ 
         Parses a message body for a username.
+
+        requires message instance.
         """
 
         if "|" in body:
@@ -136,7 +138,7 @@ class Inbox:
             username = body.strip(" ").lower()
             return username
 
-    def _parse_keywords_from_body(self, body: str) -> str:
+    def _parse_keywords_from_body(self, body: str) -> list:
         """ 
         Parses a message body for a keywords, returns list.
         """
