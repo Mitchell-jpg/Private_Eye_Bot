@@ -10,7 +10,7 @@ class TestPrivateEye(unittest.TestCase):
 
     def test_format_reply_no_comments(self):
         collected_comments = ["no comments matching keyword was found."]
-        reply = self.private_eye.reddit_user_data.format_comments(collected_comments)
+        reply = self.private_eye.reddit_user_data._format_comments(collected_comments)
         self.assertEqual(reply, "Found 0 Comment(s):\n\n no comments matching keyword(s) was found.\n")
 
     def test_format_reply_with_comments(self):
@@ -18,7 +18,7 @@ class TestPrivateEye(unittest.TestCase):
             ["Comment 1"],
             ["Comment 2"]
         ]
-        reply = self.private_eye.reddit_user_data.format_comments(collected_comments)
+        reply = self.private_eye.reddit_user_data._format_comments(collected_comments)
         self.assertEqual(reply, "Found 2 Comment(s):\n\nComment 1\n\nComment 2\n\n")
 
         collected_comments = [
@@ -26,7 +26,7 @@ class TestPrivateEye(unittest.TestCase):
             ["Comment 2"],
             ["Comment 3"]
         ]
-        reply = self.private_eye.reddit_user_data.format_comments(collected_comments)
+        reply = self.private_eye.reddit_user_data._format_comments(collected_comments)
         self.assertEqual(reply, "Found 3 Comment(s):\n\nComment 1\n\nComment 2\n\nComment 3\n\n")
 
     def test_bad_username(self):
@@ -40,8 +40,8 @@ class TestPrivateEye(unittest.TestCase):
         # Test shutdown command from bot owner
         message = MagicMock()
         message.subject = "!shutdown"
-        message.author = self.private_eye.reddit_inbox.owner_username
-        self.private_eye.reddit_inbox.search_for_commands(message)
+        message.author = self.private_eye.reddit.inbox.owner_username
+        self.private_eye.reddit_inbox._search_for_commands(message)
         #self.assertFalse(self.private_eye.bot_active)
 
 
@@ -53,7 +53,7 @@ class TestPrivateEye(unittest.TestCase):
         message.reply = MagicMock()
         message.mark_read = MagicMock()
         message.block = MagicMock()
-        self.private_eye.reddit_inbox.search_for_commands(message)
+        self.private_eye.reddit_inbox._search_for_commands(message)
         #message.reply.assert_called_once_with("Blocked user non_owner for trying to shutdown bot.")
         message.mark_read.assert_called_once()
         message.block.assert_called_once()

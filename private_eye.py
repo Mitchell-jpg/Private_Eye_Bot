@@ -123,16 +123,21 @@ class PrivateEye:
             
             # if user inputs, 'Start bot': Initialize ability to recieve commands via reddit PM  
             if self.bot_active == True:
-                print("\nBot activated sucessfully, monitoring for messages.  Press CTRL + C to stop bot locally.")
-            while self.bot_active == True:
-                try:
-                    self.reddit_inbox.check_messages()    
-                    time.sleep(10)
-                # Exception is used to break free from loop when !shutdown command is issued via PM
+                self._activate_bot()
+    
+    @connectivity_check
+    def _activate_bot(self) -> None:
+        print("\nBot activated sucessfully, monitoring for messages.  Press CTRL + C to stop bot locally.")
+        
+        while self.bot_active == True:
+            try:
+                self.reddit_inbox.check_messages()    
+                time.sleep(10)
 
-                except Exception:
-                    self.bot_active = False
-                    break
+            # Exception is used to break free from loop when !shutdown command is issued via PM
+            except Exception:
+                self.bot_active = False
+                break
 
     @connectivity_check
     def _check_user_input(self, user_input: str) -> None:
